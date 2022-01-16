@@ -37,7 +37,9 @@ class App(ttk.Frame):
         )
         self.edit_event_button.grid(row=2, column=0, padx=2.5, pady=2.5)
 
-        self.delete_event_button = ttk.Button(self.menu_frame, text="Delete Event")
+        self.delete_event_button = ttk.Button(
+            self.menu_frame, text="Delete Event", command=self.delete_event
+        )
         self.delete_event_button.grid(row=3, column=0, padx=2.5, pady=2.5)
 
         self.event_log_frame = ttk.LabelFrame(self, text="Event Log")
@@ -75,17 +77,76 @@ class App(ttk.Frame):
         )
         self.button.grid(row=2, column=1, pady=5, sticky="")
 
-    def get_new_event(self, win):
-        event_name_str = self.event_name.get()
-        event_date_str = self.event_date.get()
-        if event_date_str:
-            self.write_to_file(event_name_str, event_date_str)
-            self.event_log[event_name_str] = event_date_str
-            self.update_event_log()
+    def get_new_event(self, win, newkey=None, delkey=False):
+        if delkey:
+            self.event_log.pop(newkey)
+        else:
+            event_name_str = self.event_name.get()
+            event_date_str = self.event_date.get()
+            if event_date_str:
+                if newkey:
+                    self.event_log.pop(newkey)
+                self.event_log[event_name_str] = event_date_str
+        self.write_to_file()
+        self.update_event_log()
         win.destroy()
 
     def edit_event(self):
-        pass
+        win = tk.Toplevel(self)
+        win.title("Edit Event Info")
+
+        self.event_picker = ttk.Combobox(
+            win, state="readonly", values=[key for key in self.event_log.keys()]
+        )
+        self.event_picker.current(0)
+        self.event_picker.bind("<<ComboboxSelected>>", self.get_event_info)
+        self.event_picker.grid(row=0, column=0)
+
+        ttk.Label(win, text="Enter Event Name:").grid(
+            row=1, column=0, pady=5, sticky="w"
+        )
+        ttk.Label(win, text="Enter Event Date:").grid(
+            row=2, column=0, pady=5, sticky="w"
+        )
+
+        self.event_name = ttk.Entry(win)
+        self.event_name.grid(row=1, column=1, padx=5, pady=5)
+
+        self.event_date = ttk.Entry(win)
+        self.event_date.grid(row=2, column=1, padx=5, pady=5)
+
+        self.button = ttk.Button(
+            win,
+            text="Ok",
+            command=lambda: self.get_new_event(win, newkey=self.event_picker.get()),
+        )
+        self.button.grid(row=3, column=1, pady=5, sticky="")
+        self.get_event_info(0)
+
+    def delete_event(self):
+        win = tk.Toplevel(self)
+        win.title("Delete Event")
+
+        self.event_picker = ttk.Combobox(
+            win, state="readonly", values=[key for key in self.event_log.keys()]
+        )
+        self.event_picker.current(0)
+        self.event_picker.grid(row=0, column=0, padx=5)
+
+        self.button = ttk.Button(
+            win,
+            text="Delete",
+            command=lambda: self.get_new_event(
+                win, newkey=self.event_picker.get(), delkey=True
+            ),
+        )
+        self.button.grid(row=0, column=1, padx=5, pady=5, sticky="")
+
+    def get_event_info(self, event):
+        self.event_name.delete(0, "end")
+        self.event_date.delete(0, "end")
+        self.event_name.insert(0, self.event_picker.get())
+        self.event_date.insert(0, self.event_log[self.event_picker.get()])
 
     def update_event_log(self):
         self.event_log_text.configure(state="normal")
@@ -107,9 +168,10 @@ class App(ttk.Frame):
 
         self.event_log_text.configure(state="disabled")
 
-    def write_to_file(self, event_name, event_date):
-        with open("event_log.txt", "a+") as file_obj:
-            file_obj.write(f"{event_name}:{event_date}\n")
+    def write_to_file(self):
+        with open("event_log.txt", "w") as file_obj:
+            for event_name, event_date in self.event_log.items():
+                file_obj.write(f"{event_name}:{event_date}\n")
 
     def read_event_log(self):
         event_log = dict()
