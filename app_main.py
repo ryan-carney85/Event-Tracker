@@ -7,6 +7,7 @@ class App(ttk.Frame):
     def __init__(self, parent):
         ttk.Frame.__init__(self)
         self.event_log = dict()
+        self.child_window = False
         self.init_widgets()
         self.update_datetime()
         self.read_event_log()
@@ -57,15 +58,19 @@ class App(ttk.Frame):
         self.after(1000, self.update_datetime)
 
     def add_event(self):
+        if self.child_window:
+            self.win.destroy()
+            self.child_window = False
+        self.child_window = True
         win = tk.Toplevel(self)
         win.title("Enter Event Info")
         ttk.Label(win, text="Enter Event Name:").grid(
-            row=0, column=0, pady=5, sticky="w"
+            row=0, column=0, padx=5, pady=5, sticky="w"
         )
         ttk.Label(win, text="Enter Event Date:").grid(
-            row=1, column=0, pady=5, sticky="w"
+            row=1, column=0, padx=5, pady=5, sticky="w"
         )
-
+        self.win = win
         self.event_name = ttk.Entry(win)
         self.event_name.grid(row=0, column=1, padx=5, pady=5)
 
@@ -73,25 +78,23 @@ class App(ttk.Frame):
         self.event_date.grid(row=1, column=1, padx=5, pady=5)
 
         self.button = ttk.Button(
-            win, text="Ok", command=lambda: self.get_new_event(win)
+            win,
+            text="Ok",
+            style="Accent.TButton",
+            command=lambda: self.manage_event_callback(win, mode='new'),
         )
-        self.button.grid(row=2, column=1, pady=5, sticky="")
+        self.button.grid(row=2, column=0, pady=5, sticky="e")
 
-    def get_new_event(self, win, newkey=None, delkey=False):
-        if delkey:
-            self.event_log.pop(newkey)
-        else:
-            event_name_str = self.event_name.get()
-            event_date_str = self.event_date.get()
-            if event_date_str:
-                if newkey:
-                    self.event_log.pop(newkey)
-                self.event_log[event_name_str] = event_date_str
-        self.write_to_file()
-        self.update_event_log()
-        win.destroy()
+        self.cancel = ttk.Button(
+            win, text="Cancel", command=lambda: self.close_window(win)
+        )
+        self.cancel.grid(row=2, column=1, padx=5, pady=5, sticky="w")
 
     def edit_event(self):
+        if self.child_window:
+            self.win.destroy()
+            self.child_window = False
+        self.child_window = True
         win = tk.Toplevel(self)
         win.title("Edit Event Info")
 
@@ -100,15 +103,15 @@ class App(ttk.Frame):
         )
         self.event_picker.current(0)
         self.event_picker.bind("<<ComboboxSelected>>", self.get_event_info)
-        self.event_picker.grid(row=0, column=0)
+        self.event_picker.grid(row=0, column=0, padx=5, pady=5)
 
         ttk.Label(win, text="Enter Event Name:").grid(
-            row=1, column=0, pady=5, sticky="w"
+            row=1, column=0, padx=5, pady=5, sticky="e"
         )
         ttk.Label(win, text="Enter Event Date:").grid(
-            row=2, column=0, pady=5, sticky="w"
+            row=2, column=0, padx=5, pady=5, sticky="e"
         )
-
+        self.win = win
         self.event_name = ttk.Entry(win)
         self.event_name.grid(row=1, column=1, padx=5, pady=5)
 
@@ -118,12 +121,23 @@ class App(ttk.Frame):
         self.button = ttk.Button(
             win,
             text="Ok",
-            command=lambda: self.get_new_event(win, newkey=self.event_picker.get()),
+            style="Accent.TButton",
+            command=lambda: self.manage_event_callback(win, newkey=self.event_picker.get(), mode='edit'),
         )
-        self.button.grid(row=3, column=1, pady=5, sticky="")
+        self.button.grid(row=3, column=0, pady=5, sticky="e")
+
+        self.cancel = ttk.Button(
+            win, text="Cancel", command=lambda: self.close_window(win)
+        )
+        self.cancel.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+
         self.get_event_info(0)
 
     def delete_event(self):
+        if self.child_window:
+            self.win.destroy()
+            self.child_window = False
+        self.child_window = True
         win = tk.Toplevel(self)
         win.title("Delete Event")
 
@@ -131,22 +145,49 @@ class App(ttk.Frame):
             win, state="readonly", values=[key for key in self.event_log.keys()]
         )
         self.event_picker.current(0)
-        self.event_picker.grid(row=0, column=0, padx=5)
-
+        self.event_picker.grid(
+            row=0, column=0, columnspan=2, padx=2.5, pady=2.5, sticky="we"
+        )
+        self.win = win
         self.button = ttk.Button(
             win,
             text="Delete",
-            command=lambda: self.get_new_event(
-                win, newkey=self.event_picker.get(), delkey=True
+            style="Accent.TButton",
+            command=lambda: self.manage_event_callback(
+                win, newkey=self.event_picker.get(), mode='delete'
             ),
         )
-        self.button.grid(row=0, column=1, padx=5, pady=5, sticky="")
+        self.button.grid(row=1, column=0, padx=5, pady=5, sticky="")
+
+        self.cancel = ttk.Button(
+            win, text="Cancel", command=lambda: self.close_window(win)
+        )
+        self.cancel.grid(row=1, column=1, padx=5, pady=5)
 
     def get_event_info(self, event):
         self.event_name.delete(0, "end")
         self.event_date.delete(0, "end")
         self.event_name.insert(0, self.event_picker.get())
         self.event_date.insert(0, self.event_log[self.event_picker.get()])
+
+    def manage_event_callback(self, win, newkey=None, mode=None):
+        match mode:
+            case 'new':
+                event_name_str = self.event_name.get()
+                event_date_str = self.event_date.get()
+                self.event_log[event_name_str] = event_date_str
+            case 'edit':
+                self.event_log.pop(newkey)
+                event_name_str = self.event_name.get()
+                event_date_str = self.event_date.get()
+                self.event_log[event_name_str] = event_date_str
+            case 'delete':
+                self.event_log.pop(newkey)
+            case _:
+                pass
+        self.write_event_log()
+        self.update_event_log()
+        self.close_window(win)
 
     def update_event_log(self):
         self.event_log_text.configure(state="normal")
@@ -168,7 +209,10 @@ class App(ttk.Frame):
 
         self.event_log_text.configure(state="disabled")
 
-    def write_to_file(self):
+    def close_window(self, win):
+        win.destroy()
+
+    def write_event_log(self):
         with open("event_log.txt", "w") as file_obj:
             for event_name, event_date in self.event_log.items():
                 file_obj.write(f"{event_name}:{event_date}\n")
