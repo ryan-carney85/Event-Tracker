@@ -24,16 +24,21 @@ class App(ttk.Frame):
         self.time_label = ttk.Label(self.dt_label_frame, text="time string")
         self.time_label.grid(row=1, column=1)
 
+        self.menu_frame = ttk.LabelFrame(self, text="Menu")
+        self.menu_frame.grid(row=1, column=0)
+
         self.new_event_button = ttk.Button(
-            self, text="New Event", command=self.new_event
+            self.menu_frame, text="New Event", command=self.add_event
         )
-        self.new_event_button.grid(row=1, column=0, pady=2.5)
+        self.new_event_button.grid(row=1, column=0, padx=2.5, pady=2.5)
 
-        self.edit_event_button = ttk.Button(self, text="Edit Event")
-        self.edit_event_button.grid(row=2, column=0, pady=2.5)
+        self.edit_event_button = ttk.Button(
+            self.menu_frame, text="Edit Event", command=self.edit_event
+        )
+        self.edit_event_button.grid(row=2, column=0, padx=2.5, pady=2.5)
 
-        self.delete_event_button = ttk.Button(self, text="Delete Event")
-        self.delete_event_button.grid(row=3, column=0, pady=2.5)
+        self.delete_event_button = ttk.Button(self.menu_frame, text="Delete Event")
+        self.delete_event_button.grid(row=3, column=0, padx=2.5, pady=2.5)
 
         self.event_log_frame = ttk.LabelFrame(self, text="Event Log")
         self.event_log_frame.grid(row=0, column=1, rowspan=4, sticky="n")
@@ -49,8 +54,9 @@ class App(ttk.Frame):
         self.time_label.configure(text=time_str)
         self.after(1000, self.update_datetime)
 
-    def new_event(self):
+    def add_event(self):
         win = tk.Toplevel(self)
+        win.title("Enter Event Info")
         ttk.Label(win, text="Enter Event Name:").grid(
             row=0, column=0, pady=5, sticky="w"
         )
@@ -67,15 +73,19 @@ class App(ttk.Frame):
         self.button = ttk.Button(
             win, text="Ok", command=lambda: self.get_new_event(win)
         )
-        self.button.grid(row=2, column=1, pady=5, sticky="w")
+        self.button.grid(row=2, column=1, pady=5, sticky="")
 
     def get_new_event(self, win):
         event_name_str = self.event_name.get()
         event_date_str = self.event_date.get()
-        self.write_to_file(event_name_str, event_date_str)
-        self.event_log[event_name_str] = event_date_str
-        self.update_event_log()
+        if event_date_str:
+            self.write_to_file(event_name_str, event_date_str)
+            self.event_log[event_name_str] = event_date_str
+            self.update_event_log()
         win.destroy()
+
+    def edit_event(self):
+        pass
 
     def update_event_log(self):
         self.event_log_text.configure(state="normal")
@@ -117,7 +127,8 @@ class App(ttk.Frame):
 
 def main():
     root = tk.Tk()
-    root.geometry("550x300")
+    root.geometry("500x280")
+    root.resizable(False, False)
     root.title("Event Tracker (v0.0.0)")
     root.tk.call("source", "azure.tcl")
     root.tk.call("set_theme", "dark")
