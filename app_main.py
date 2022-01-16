@@ -6,9 +6,11 @@ from datetime import datetime
 class App(ttk.Frame):
     def __init__(self, parent):
         ttk.Frame.__init__(self)
-
+        self.event_log = dict()
         self.init_widgets()
         self.update_datetime()
+        self.read_event_log()
+        self.update_event_log()
 
     def init_widgets(self):
         self.dt_label_frame = ttk.LabelFrame(self, text="Current Date & Time")
@@ -22,7 +24,9 @@ class App(ttk.Frame):
         self.time_label = ttk.Label(self.dt_label_frame, text="time string")
         self.time_label.grid(row=1, column=1)
 
-        self.new_event_button = ttk.Button(self, text="New Event")
+        self.new_event_button = ttk.Button(
+            self, text="New Event", command=self.new_event
+        )
         self.new_event_button.grid(row=1, column=0, pady=2.5)
 
         self.edit_event_button = ttk.Button(self, text="Edit Event")
@@ -34,7 +38,7 @@ class App(ttk.Frame):
         self.event_log_frame = ttk.LabelFrame(self, text="Event Log")
         self.event_log_frame.grid(row=0, column=1, rowspan=4, sticky="n")
 
-        self.event_log_text = tk.Text(self.event_log_frame, height=15, width=50)
+        self.event_log_text = tk.Text(self.event_log_frame, height=15, width=40)
         self.event_log_text.configure(state="disabled")
         self.event_log_text.grid(row=0, column=0, padx=3, pady=3)
 
@@ -44,6 +48,71 @@ class App(ttk.Frame):
         self.date_label.configure(text=date_str)
         self.time_label.configure(text=time_str)
         self.after(1000, self.update_datetime)
+
+    def new_event(self):
+        win = tk.Toplevel(self)
+        ttk.Label(win, text="Enter Event Name:").grid(
+            row=0, column=0, pady=5, sticky="w"
+        )
+        ttk.Label(win, text="Enter Event Date:").grid(
+            row=1, column=0, pady=5, sticky="w"
+        )
+
+        self.event_name = ttk.Entry(win)
+        self.event_name.grid(row=0, column=1, padx=5, pady=5)
+
+        self.event_date = ttk.Entry(win)
+        self.event_date.grid(row=1, column=1, padx=5, pady=5)
+
+        self.button = ttk.Button(
+            win, text="Ok", command=lambda: self.get_new_event(win)
+        )
+        self.button.grid(row=2, column=1, pady=5, sticky="w")
+
+    def get_new_event(self, win):
+        event_name_str = self.event_name.get()
+        event_date_str = self.event_date.get()
+        self.write_to_file(event_name_str, event_date_str)
+        self.event_log[event_name_str] = event_date_str
+        self.update_event_log()
+        win.destroy()
+
+    def update_event_log(self):
+        self.event_log_text.configure(state="normal")
+        self.event_log_text.delete("1.0", "end")
+
+        self.event_log = dict(
+            sorted(
+                self.event_log.items(),
+                key=lambda item: datetime.strptime(item[1], "%m-%d-%Y"),
+            )
+        )
+
+        for event_name, event_date in self.event_log.items():
+            delta_t = datetime.strptime(event_date, "%m-%d-%Y") - datetime.now()
+            str_1 = f"{event_name}: ({event_date})"
+            str_2 = f"{delta_t.days} days"
+            pad_size = 50 - len(str_1 + str_2)
+            self.event_log_text.insert("end", f"{str_1}{'.'*pad_size}{str_2}\n")
+
+        self.event_log_text.configure(state="disabled")
+
+    def write_to_file(self, event_name, event_date):
+        with open("event_log.txt", "a+") as file_obj:
+            file_obj.write(f"{event_name}:{event_date}\n")
+
+    def read_event_log(self):
+        event_log = dict()
+        try:
+            with open("event_log.txt", "r") as file_obj:
+                for line in file_obj:
+                    key, value = [x.strip() for x in line.split(":")]
+                    event_log[key] = value
+        except FileNotFoundError:
+            with open("event_log.txt", "w") as file_obj:
+                pass
+
+        self.event_log = event_log
 
 
 def main():
