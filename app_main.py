@@ -1,4 +1,5 @@
 import tkinter as tk
+import tool_tip
 from tkinter import ttk
 from datetime import datetime
 
@@ -57,13 +58,17 @@ class App(ttk.Frame):
         self.time_label.configure(text=time_str)
         self.after(1000, self.update_datetime)
 
-    def add_event(self):
+    def rebuild_prompt_window(self, title):
         if self.child_window:
             self.win.destroy()
             self.child_window = False
         self.child_window = True
         win = tk.Toplevel(self)
-        win.title("Enter Event Info")
+        win.title(title)
+        return win
+
+    def add_event(self):        
+        win = self.rebuild_prompt_window("Enter Event Info")
         ttk.Label(win, text="Enter Event Name:").grid(
             row=0, column=0, padx=5, pady=5, sticky="w"
         )
@@ -75,6 +80,7 @@ class App(ttk.Frame):
         self.event_name.grid(row=0, column=1, padx=5, pady=5)
 
         self.event_date = ttk.Entry(win)
+        tool_tip.create(self.event_date, "mm-dd-yyyy")
         self.event_date.grid(row=1, column=1, padx=5, pady=5)
 
         self.button = ttk.Button(
@@ -91,12 +97,7 @@ class App(ttk.Frame):
         self.cancel.grid(row=2, column=1, padx=5, pady=5, sticky="w")
 
     def edit_event(self):
-        if self.child_window:
-            self.win.destroy()
-            self.child_window = False
-        self.child_window = True
-        win = tk.Toplevel(self)
-        win.title("Edit Event Info")
+        win = self.rebuild_prompt_window("Edit Event Info")        
 
         self.event_picker = ttk.Combobox(
             win, state="readonly", values=[key for key in self.event_log.keys()]
@@ -134,12 +135,7 @@ class App(ttk.Frame):
         self.get_event_info(0)
 
     def delete_event(self):
-        if self.child_window:
-            self.win.destroy()
-            self.child_window = False
-        self.child_window = True
-        win = tk.Toplevel(self)
-        win.title("Delete Event")
+        win = self.rebuild_prompt_window("Delete Event")        
 
         self.event_picker = ttk.Combobox(
             win, state="readonly", values=[key for key in self.event_log.keys()]
@@ -170,16 +166,27 @@ class App(ttk.Frame):
         self.event_name.insert(0, self.event_picker.get())
         self.event_date.insert(0, self.event_log[self.event_picker.get()])
 
+    def validate_date_string(self, date_string):
+        new_date_string = ""
+        try:
+            new_date_string = datetime.strptime(date_string, "%m-%d-%Y")
+        except:
+            print("bad date string format \nShould be 'mm-dd-yy'")
+            new_date_string = "01-01-0001"
+        return new_date_string
+
     def manage_event_callback(self, win, newkey=None, mode=None):
         match mode:
             case 'new':
                 event_name_str = self.event_name.get()
                 event_date_str = self.event_date.get()
+                event_date_str = self.validate_date_string(event_date_str)
                 self.event_log[event_name_str] = event_date_str
             case 'edit':
                 self.event_log.pop(newkey)
                 event_name_str = self.event_name.get()
                 event_date_str = self.event_date.get()
+                event_date_str = self.validate_date_string(event_date_str)
                 self.event_log[event_name_str] = event_date_str
             case 'delete':
                 self.event_log.pop(newkey)
