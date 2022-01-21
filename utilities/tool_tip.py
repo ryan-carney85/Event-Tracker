@@ -1,7 +1,7 @@
 import tkinter as tk
-# tool tip crap
-class tool_tip(object):
 
+
+class tool_tip(object):
     def __init__(self, widget):
         self.widget = widget
         self.tipwindow = None
@@ -13,14 +13,21 @@ class tool_tip(object):
         if self.tipwindow or not self.text:
             return
         x, y, cx, cy = self.widget.bbox("insert")
-        x = x + self.widget.winfo_rootx()# + 57
+        x = x + self.widget.winfo_rootx()  # + 57
         y = y + cy + self.widget.winfo_rooty() + 8
         self.tipwindow = tw = tk.Toplevel(self.widget)
         tw.wm_overrideredirect(1)
         tw.wm_geometry("+%d+%d" % (x, y))
-        label = tk.Label(tw, text=self.text, justify=tk.LEFT,
-                      background="#ffffe0", foreground= "#666666", relief=tk.SOLID, borderwidth=1,
-                      font=("tahoma", "8", "normal"))
+        label = tk.Label(
+            tw,
+            text=self.text,
+            justify=tk.LEFT,
+            background="#ffffe0",
+            foreground="#666666",
+            relief=tk.SOLID,
+            borderwidth=1,
+            font=("tahoma", "8", "normal"),
+        )
         label.pack(ipadx=1)
 
     def hidetip(self):
@@ -29,13 +36,15 @@ class tool_tip(object):
         if tw:
             tw.destroy()
 
+
 def create(widget, text):
     toolTip = tool_tip(widget)
+
     def enter(event):
         toolTip.showtip(text)
+
     def leave(event):
         toolTip.hidetip()
-    widget.bind('<Enter>', enter)
-    widget.bind('<Leave>', leave)
 
-#
+    widget.bind("<Enter>", enter)
+    widget.bind("<Leave>", leave)

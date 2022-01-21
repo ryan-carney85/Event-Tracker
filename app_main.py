@@ -1,5 +1,5 @@
 import tkinter as tk
-from utilities.App import App
+from utilities import App
 
 
 def main():
@@ -9,7 +9,7 @@ def main():
     root.title("Event Tracker (v0.0.0)")
     root.tk.call("source", "azure.tcl")
     root.tk.call("set_theme", "dark")
-    app = App(root)
+    app = App.App(root)
     app.pack(fill="both", expand=True)
     root.mainloop()
 

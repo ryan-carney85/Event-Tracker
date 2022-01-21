@@ -1,10 +1,9 @@
 import tkinter as tk
-import tool_tip
 from tkinter import ttk
 from datetime import datetime
-
+from utilities import tool_tip, callbacks
 from utilities import log_handler as logger
-from utilities import callbacks
+
 
 class App(ttk.Frame):
     def __init__(self, parent):

@@ -17,7 +17,8 @@ python app_main.py
 
 # Credits
 As mentioned above, the Azure Dark Theme TTK comes from
-https://github.com/rdbende/Azure-ttk-theme.  V2.1.0 is used under the MIT License
+https://github.com/rdbende/Azure-ttk-theme.  V2.1.0 is used under the MIT License:
+
 MIT License
 
 Copyright (c) 2021 rdbende
