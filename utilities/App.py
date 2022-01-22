@@ -1,3 +1,4 @@
+from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 from utilities.DateTimeFrame import DateTimeFrame
@@ -72,8 +73,14 @@ class App(tk.Tk):
     def get_event(self):
         event_name_str = self.event_name.get()
         event_date_str = self.event_date.get()
-        self.frame_3.event_log[event_name_str] = event_date_str
-        self.frame_3.update_event_log()
+        try:
+            datetime.strptime(event_date_str, "%m-%d-%Y")
+        except ValueError:
+            self.event_date.delete(0, "end")
+            self.event_date.insert(0, "Wrong Date Format")
+        else:
+            self.frame_3.event_log[event_name_str] = event_date_str
+            self.frame_3.update_event_log()
 
     def edit_button_callback(self):
         win = self.child_window("Edit Event")
@@ -117,12 +124,18 @@ class App(tk.Tk):
         self.event_date.insert(0, self.frame_3.event_log[self.event_picker.get()])
 
     def edit_event(self, win, event):
-        self.frame_3.event_log.pop(event)
         event_name_str = self.event_name.get()
         event_date_str = self.event_date.get()
-        self.frame_3.event_log[event_name_str] = event_date_str
-        self.frame_3.update_event_log()
-        win.destroy()
+        try:
+            datetime.strptime(event_date_str, "%m-%d-%Y")
+        except ValueError:
+            self.event_date.delete(0, "end")
+            self.event_date.insert(0, "Wrong Date Format")
+        else:
+            self.frame_3.event_log.pop(event)
+            self.frame_3.event_log[event_name_str] = event_date_str
+            self.frame_3.update_event_log()
+            win.destroy()
 
     def delete_button_callback(self):
         win = self.child_window("Delete Event")
