@@ -13,6 +13,8 @@ class App(tk.Tk):
         self.title("Event Tracker (v0.0.0)")
         self.tk.call("source", "azure.tcl")
         self.tk.call("set_theme", "dark")
+        self.child_win_flag = False
+        self.child_win = None
 
         self.frame_1 = DateTimeFrame(self)
         self.frame_2 = MenuFrame(self)
@@ -26,9 +28,18 @@ class App(tk.Tk):
         self.frame_2.edit_button.config(command=self.edit_button_callback)
         self.frame_2.delete_button.config(command=self.delete_button_callback)
 
-    def add_button_callback(self):
+    def child_window(self, title):
+        if self.child_win_flag:
+            self.child_win.destroy()
+            self.child_win_flag = False
+        self.child_win_flag = True
         win = tk.Toplevel(self)
-        win.title("Add New Event")
+        win.title(title)
+        return win
+
+    def add_button_callback(self):
+        win = self.child_window("Add New Event")
+        self.child_win = win
 
         ttk.Label(win, text="Enter Event Name:").grid(
             row=0, column=0, padx=5, pady=5, sticky="w"
@@ -65,8 +76,8 @@ class App(tk.Tk):
         self.frame_3.update_event_log()
 
     def edit_button_callback(self):
-        win = tk.Toplevel(self)
-        win.title("Edit Event")
+        win = self.child_window("Edit Event")
+        self.child_win = win
 
         self.event_picker = ttk.Combobox(
             win, state="readonly", values=[key for key in self.frame_3.event_log.keys()]
@@ -81,24 +92,22 @@ class App(tk.Tk):
         ttk.Label(win, text="Enter Event Date:").grid(
             row=2, column=0, padx=5, pady=5, sticky="e"
         )
-        self.win = win
         self.event_name = ttk.Entry(win)
         self.event_name.grid(row=1, column=1, padx=5, pady=5)
 
         self.event_date = ttk.Entry(win)
         self.event_date.grid(row=2, column=1, padx=5, pady=5)
 
-        self.button = ttk.Button(
+        self.button_1 = ttk.Button(
             win,
             text="Ok",
             style="Accent.TButton",
             command=lambda: self.edit_event(win, self.event_picker.get()),
         )
-        self.button.grid(row=3, column=0, pady=5, sticky="e")
+        self.button_1.grid(row=3, column=0, pady=5, sticky="e")
 
-        self.cancel = ttk.Button(win, text="Cancel", command=win.destroy)
-        self.cancel.grid(row=3, column=1, padx=5, pady=5, sticky="w")
-
+        self.button_2 = ttk.Button(win, text="Cancel", command=win.destroy)
+        self.button_2.grid(row=3, column=1, padx=5, pady=5, sticky="w")
         self.get_event_info(0)
 
     def get_event_info(self, event):
@@ -116,8 +125,8 @@ class App(tk.Tk):
         win.destroy()
 
     def delete_button_callback(self):
-        win = tk.Toplevel(self)
-        win.title("Delete Event")
+        win = self.child_window("Delete Event")
+        self.child_win = win
 
         self.event_picker = ttk.Combobox(
             win, state="readonly", values=[key for key in self.frame_3.event_log.keys()]
@@ -126,18 +135,17 @@ class App(tk.Tk):
         self.event_picker.grid(
             row=0, column=0, columnspan=2, padx=2.5, pady=2.5, sticky="we"
         )
-        self.win = win
-        self.button = ttk.Button(
+        self.button_1 = ttk.Button(
             win,
             text="Delete",
             style="Accent.TButton",
             command=lambda: self.delete_event(win, self.event_picker.get()),
         )
 
-        self.button.grid(row=1, column=0, padx=5, pady=5, sticky="")
+        self.button_1.grid(row=1, column=0, padx=5, pady=5, sticky="")
 
-        self.cancel = ttk.Button(win, text="Cancel", command=win.destroy)
-        self.cancel.grid(row=1, column=1, padx=5, pady=5)
+        self.button_2 = ttk.Button(win, text="Cancel", command=win.destroy)
+        self.button_2.grid(row=1, column=1, padx=5, pady=5)
 
     def delete_event(self, win, event):
         self.frame_3.event_log.pop(event)
