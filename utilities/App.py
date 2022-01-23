@@ -4,6 +4,7 @@ from tkinter import ttk
 from utilities.DateTimeFrame import DateTimeFrame
 from utilities.MenuFrame import MenuFrame
 from utilities.EventFrame import EventFrame
+from utilities import tool_tip
 
 
 class App(tk.Tk):
@@ -54,6 +55,7 @@ class App(tk.Tk):
 
         self.event_date = ttk.Entry(win)
         self.event_date.grid(row=1, column=1, padx=5, pady=5)
+        tool_tip.create(self.event_date, "mm-dd-yyyy")
 
         button_1 = ttk.Button(
             win,
@@ -104,6 +106,7 @@ class App(tk.Tk):
 
         self.event_date = ttk.Entry(win)
         self.event_date.grid(row=2, column=1, padx=5, pady=5)
+        tool_tip.create(self.event_date, "mm-dd-yyyy")
 
         self.button_1 = ttk.Button(
             win,
